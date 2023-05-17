@@ -21,6 +21,8 @@
 			Class.forName(driver);
 			Connection conn = DriverManager.getConnection(dburl, dbuser, dbpw);
 			System.out.println(conn);
+			
+			
 			String sql = "select department_id 부서ID, count(*) 부서인원, sum(salary) 급여합계, round(avg(salary)) 급여평균, max(salary) 최대급여, min(salary) 최소급여 from employees where department_id is not null group by department_id having count(*) > 1 order by count(*) desc";
 			PreparedStatement stmt = conn.prepareStatement(sql);
 			System.out.println(stmt);
