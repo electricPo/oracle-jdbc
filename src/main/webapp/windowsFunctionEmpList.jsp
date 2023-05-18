@@ -144,18 +144,20 @@
 		<%
 		//마지막 페이지가 10으로 떨어지지 않으니까
 		
-		int lastPage = totalRow / rowPerPage;
-		if(totalRow % rowPerPage != 0){
-			lastPage = lastPage +1; //10으로 나누어 떨어지지 않는 나머지 게시글을 위한 1 페이지 생성
+		int lastPage = totalRow / rowPerPage; //마지막 페이지는 전체 행에서 페이지 당 보이는 행(현재 10)을 나눈다
+		if(totalRow % rowPerPage != 0){ //나눈 값이 0으로 떨어지지 않을 때
+			lastPage = lastPage +1; // '나머지 게시글'을 위한 1 페이지 생성
 		}
 		
-		// 
-		int pagePerPage = 10;
+		// '이전'과 '다음' 사이의 항목 번호 개수
+		int pagePerPage = 10; //페이징 버튼 수
 		
 		int minPage = ((currentPage-1)/pagePerPage) * pagePerPage + 1;
-		
+		//1 11 21 31
 		
 		int maxPage = minPage +(pagePerPage -1);
+		//10 20 30 40
+		
 		if(maxPage > lastPage){ 
 			maxPage = lastPage;
 		}
@@ -164,7 +166,7 @@
 		 
 		<div class="container text-center">
 		<% 
-		      if(minPage > 1) {
+		      if(minPage > 1) { // 1페이지에 해당할 때 이전 버튼은 사라진다
 						%>
 						   <a href="<%=request.getContextPath()%>/windowsFunctionEmpList.jsp?currentPage=<%=minPage-pagePerPage%>">이전</a>   
 						<%
@@ -182,7 +184,7 @@
 						   }
 						}
 						
-						if(maxPage != lastPage) {
+						if(maxPage != lastPage) { //마지막 페이지에 해당할 때 다음 버튼은 사라진다
 						%>
 						   <!--  maxPage + 1 -->
 						   <a href="<%=request.getContextPath()%>/windowsFunctionEmpList.jsp?currentPage=<%=minPage+pagePerPage%>">다음</a>
