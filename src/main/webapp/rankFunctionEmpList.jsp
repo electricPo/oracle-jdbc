@@ -5,16 +5,7 @@
 
 
 <%
-	/*
-	select 번호, 이름, 이름첫글자, 연봉, 급여, 입사날짜, 입사년도 
-	from
-	    (select rownum 번호, last_name 이름, substr(last_name, 1, 1) 이름첫글자, salary 연봉, round(salary/12, 2) 급여, hire_date 입사날짜, extract(year from hire_date) 입사년도 
-	    from employees)
-	where 번호 between 11 and 20;
 
-	
-	
-	*/
 	int currentPage = 1;
 	if(request.getParameter("currentPage") != null){
 		
@@ -55,38 +46,40 @@
 			endRow = totalRow;
 		}
 			
+	/*
+	SELECT employee_id, last_name, salary, rank() over(order by salary desc) 급여순위
+        from employees;
+	*/
 			
 	//쿼리문		
-	String sql1 = "select 번호, 이름, 이름첫글자, 연봉, 급여, 입사날짜, 입사년도 from (select rownum 번호, last_name 이름, substr(last_name, 1, 1) 이름첫글자, salary 연봉, round( salary/12, 2) 급여, hire_date 입사날짜, extract(year from hire_date) 입사년도 from employees) where 번호 between ? and ?";
+	//where절에 '급여순위' 알리언스를 사용하기 위해 from 절에 서브쿼리를 사용함
+	String sql = "select 직원ID, 이름, 연봉, 급여순위 from (select employee_id 직원ID, last_name 이름, salary 연봉, rank() over(order by salary desc) 급여순위 from employees) where 급여순위 between ? and ?";
 
-	PreparedStatement stmt1 = conn.prepareStatement(sql1);
-	System.out.println(stmt1 + "<-groupbyfunction stmt1");
-	stmt1.setInt(1,beginRow);
-	stmt1.setInt(2,endRow);
+	PreparedStatement stmt = conn.prepareStatement(sql);
+	System.out.println(stmt + "<-rankFunctionEmpList stmt");
+	stmt.setInt(1, beginRow); //페이징을 위한 stmt
+	stmt.setInt(2, endRow);
+
+	System.out.println(stmt +"<- rankFunctionEmpList stmt");
 	
-	
-	ResultSet rs = stmt1.executeQuery();
-	
-	System.out.println(stmt1);
+	ResultSet rs = stmt.executeQuery();
+
 	
 	
 	ArrayList<HashMap<String, Object>> list = new ArrayList<HashMap<String, Object>>();
 
 	while(rs.next()) {
 		HashMap<String, Object> m = new HashMap<String, Object>();
-		m.put("번호", rs.getInt("번호"));
+		m.put("직원ID", rs.getInt("직원ID"));
 		m.put("이름", rs.getString("이름"));
-		m.put("이름첫글자", rs.getString("이름첫글자"));
-		m.put("연봉", rs.getInt("연봉"));
-		m.put("급여", rs.getDouble("급여")); //round
-		m.put("입사날짜", rs.getString("입사날짜"));
-		m.put("입사년도", rs.getInt("입사년도")); //string / int 둘 다 가능
+		m.put("연봉", rs.getString("연봉"));
+		m.put("급여순위", rs.getInt("급여순위"));
 		list.add(m);
 		
 	
 		}
 
-	System.out.println(list.size()+"<-list.size");
+	System.out.println(list.size()+"<- rankFunctionEmpList list.size"); //10 확인
 	
 	
 	
@@ -102,52 +95,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-<!------------------------------- 전체 테마 부트스트랩 탬플릿1 -->
-
-  <!-- Latest compiled and minified CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-	
-	<!-- Latest compiled JavaScript -->
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-
 
 <meta charset="UTF-8">
 <title>Insert title here</title>
 </head>
 <body>
-		<h1>employee</h1>
+		<h1>rankfunctionEmpList</h1>
+		
 	<table class="container">
 	
-	<tr>
-		<td>번호</td>
-		<td>이름</td>
-		<td>이름첫글자</td>
-		<td>연봉</td>
-		<td>급여</td>
-		<td>입사날짜</td>
-		<td>입사년도</td>
-
-	</tr>
+		<tr>
+			<td>직원ID</td>
+			<td>이름</td>
+			<td>연봉</td>
+			<td>급여순위</td>
 	
-	<% 
-		for(HashMap<String, Object> m : list) {
-	%>		
+		</tr>
 		
-
-			<tr>
-					<td><%=(Integer)(m.get("번호"))%></td>
-					<td><%=(String)(m.get("이름"))%></td>
-					<td><%=(String)(m.get("이름첫글자"))%></td>
-					<td><%=(Integer)(m.get("연봉"))%></td>
-					<td><%=(Double)(m.get("급여"))%></td>
-					<td><%=(String)(m.get("입사날짜"))%></td>
-					<td><%=(Integer)(m.get("입사년도"))%></td>
+		<% 
+			for(HashMap<String, Object> m : list) {
+		%>		
+			
+	
+				<tr>
+						<td><%=(Integer)(m.get("직원ID"))%></td>
+						<td><%=(String)(m.get("이름"))%></td>
+						<td><%=(String)(m.get("연봉"))%></td>
+						<td><%=(Integer)(m.get("급여순위"))%></td>
+	
 				</tr>
+			
+		<%		
+		}
+		%>
 		
-	<%		
-	}
-	%>
 	</table>
+	
+	
 	<%
 		//페이징 1234 네비게이션
 	
@@ -205,7 +189,7 @@
 	<% 
 		      if(minPage > 1) {
 						%>
-						   <a href="<%=request.getContextPath()%>/functionEmpList.jsp?currentPage=<%=minPage-pagePerPage%>">이전</a>   
+						   <a href="<%=request.getContextPath()%>/rankFunctionEmpList.jsp?currentPage=<%=minPage-pagePerPage%>">이전</a>   
 						<%
 						}
 						
@@ -216,7 +200,7 @@
 						<%         
 						   } else {      
 						%>
-						      <a href="<%=request.getContextPath()%>/functionEmpList.jsp?currentPage=<%=i%>"><%=i%></a>&nbsp;   
+						      <a href="<%=request.getContextPath()%>/rankFunctionEmpList.jsp?currentPage=<%=i%>"><%=i%></a>&nbsp;   
 						<%   
 						   }
 						}
@@ -224,7 +208,7 @@
 						if(maxPage != lastPage) {
 						%>
 						   <!--  maxPage + 1 -->
-						   <a href="<%=request.getContextPath()%>/functionEmpList.jsp?currentPage=<%=minPage+pagePerPage%>">다음</a>
+						   <a href="<%=request.getContextPath()%>/rankFunctionEmpList.jsp?currentPage=<%=minPage+pagePerPage%>">다음</a>
 						<%
 					 	      }
 	
